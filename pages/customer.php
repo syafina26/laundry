@@ -35,21 +35,21 @@ if (isset($_GET['delete'])) {
           </thead>
           <tbody>
             <?php foreach ($customers as $key => $value): ?>
-              <tr>
-                <td><?php echo $key += 1 ?></td>
-                <td><?php echo $value['name'] ?></td>
-                <td><?php echo $value['phone'] ?></td>
-                <td><?php echo $value['address'] ?></td>
-                <td>
-                  <a class="btn btn-success" href="?page=tambah-customer&edit=<?php echo $value['id'] ?>">
-                    <i class="bi bi-pencil"></i>
-                  </a>|
-                  <a class="btn btn-danger btn-sm" onclick="return confirm('Apakah anda yakin akan menghapus data ini?')"
-                    href="?page=customer&delete=<?php echo $value['id'] ?>">
-                    <i class="bi bi-trash"></i>
-                  </a>
-                </td>
-              </tr>
+            <tr>
+              <td><?php echo $key += 1 ?></td>
+              <td><?php echo $value['name'] ?></td>
+              <td><?php echo $value['phone'] ?></td>
+              <td><?php echo $value['address'] ?></td>
+              <td>
+                <a class="btn btn-success" href="?page=tambah-customer&edit=<?php echo $value['id'] ?>">
+                  <i class="bi bi-pencil"></i>
+                </a>|
+                <a class="btn btn-danger" onclick="return confirm('Apakah anda yakin akan menghapus data ini?')"
+                  href="?page=customer&delete=<?php echo $value['id'] ?>">
+                  <i class="bi bi-trash"></i>
+                </a>
+              </td>
+            </tr>
             <?php endforeach ?>
           </tbody>
         </table>

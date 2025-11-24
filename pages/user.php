@@ -49,7 +49,7 @@ if (isset($_GET['delete'])) {
                   <a class="btn btn-success" href="?page=tambah-user&edit=<?php echo $value['id'] ?>">
                     <i class="bi bi-pencil"></i>
                   </a>|
-                  <a class="btn btn-danger btn-sm" onclick="return confirm('Apakah anda yakin akan menghapus data ini?')"
+                  <a class="btn btn-danger" onclick="return confirm('Apakah anda yakin akan menghapus data ini?')"
                     href="?page=user&delete=<?php echo $value['id'] ?>">
                     <i class="bi bi-trash"></i>
                   </a>
