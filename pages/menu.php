@@ -1,13 +1,13 @@
 <?php
 
-$q_levels = mysqli_query($config, "SELECT * FROM levels");
-$levels = mysqli_fetch_all($q_levels, MYSQLI_ASSOC);
-// var_dump($levels)
+$q_menus = mysqli_query($config, "SELECT * FROM menus");
+$menus = mysqli_fetch_all($q_menus, MYSQLI_ASSOC);
+// var_dump($menus)
 
 if (isset($_GET['delete'])) {
   $id = $_GET['delete'];
-  $q_delete = mysqli_query($config, "DELETE FROM levels WHERE id='$id'");
-  header("location:?page=level");
+  $q_delete = mysqli_query($config, "DELETE FROM menus WHERE id='$id'");
+  header("location:?page=Menu");
 }
 ?>
 
@@ -17,7 +17,7 @@ if (isset($_GET['delete'])) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Level</title>
+  <title>Menu</title>
 </head>
 
 <body>
@@ -25,34 +25,40 @@ if (isset($_GET['delete'])) {
     <div class="col-sm-12">
       <div class="card">
         <div class="card-header">
-          <h3 class="card-title">Data Level</h3>
+          <h3 class="card-title">Data Menu</h3>
         </div>
         <div class="card-body">
           <div class="d-flex justify-content-end m-2">
-            <a href="?page=tambah-level" class="btn btn-primary"> Add Levels</a>
+            <a href="?page=tambah-Menu" class="btn btn-primary"> Add Menu</a>
           </div>
           <table class="table table-bordered">
             <tr>
               <th>No</th>
-              <th>Level</th>
+              <th>Name</th>
+              <th>Icon</th>
+              <th>Link</th>
               <th>Actions</th>
             </tr>
             <?php
-            foreach ($levels as $key => $level) {
+            foreach ($menus as $key => $Menu) {
             ?>
               <tr>
                 <td>
                   <?Php echo $key + 1 ?>
                 </td>
                 <td>
-                  <?Php echo $level['name'] ?>
+                  <?Php echo $Menu['name'] ?>
                 </td>
                 <td>
-                  <a href="?page=add-role-menu&edit=<?php echo $level['id'] ?>" class="btn btn-warning">
-                    <i class="bi bi-plus"></i></a>
-                  <a href="?page=tambah-level&edit=<?php echo $level['id'] ?>" class="btn btn-success">
+                  <?Php echo $Menu['icon'] ?>
+                </td>
+                <td>
+                  <?Php echo $Menu['link'] ?>
+                </td>
+                <td>
+                  <a href="?page=tambah-Menu&edit=<?php echo $Menu['id'] ?>" class="btn btn-success">
                     <i class="bi bi-pencil"></i></a>
-                  <form class="d-inline" action="?page=level&delete=<?php echo $level['id'] ?>" method="post"
+                  <form class="d-inline" action="?page=Menu&delete=<?php echo $Menu['id'] ?>" method="post"
                     onclick="return confirm('Apakah ingin di hapus??')">
                     <button type="submit" class="btn btn-danger">
                       <i class="bi bi-trash"></i></button>

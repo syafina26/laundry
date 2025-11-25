@@ -1,16 +1,23 @@
+<?php
+$level_id = $_SESSION['LEVEL_ID'] ?? '';
+
+$queryLevelMenu = mysqli_query($config, "SELECT * FROM menus JOIN level_menus ON menus.id = level_menus.menu_id WHERE level_id ='$level_id' ORDER BY menus.id DESC");
+$rowLevelMenus = mysqli_fetch_all($queryLevelMenu, MYSQLI_ASSOC)
+?>
+
 <aside id="sidebar" class="sidebar">
 
   <ul class="sidebar-nav" id="sidebar-nav">
+    <?php foreach ($rowLevelMenus as $rowLevelMenu): ?>
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="<?php echo $rowLevelMenu['link'] ?>">
+          <i class="<?php echo $rowLevelMenu['icon'] ?>"></i>
+          <span><?php echo $rowLevelMenu['name'] ?></span>
+        </a>
+      </li><!-- End Dashboard Nav -->
+    <?php endforeach ?>
 
-    <li class="nav-item">
-      <a class="nav-link collapsed" href="?page=dashboard">
-        <i class="bi bi-grid"></i>
-        <span>Dashboard</span>
-      </a>
-    </li><!-- End Dashboard Nav -->
-
-
-    <li class="nav-item">
+    <!-- <li class="nav-item">
       <a class="nav-link collapsed" data-bs-target="#components-nav" data-bs-toggle="collapse" href="#">
         <i class="bi bi-menu-button-wide"></i><span>Master Data</span><i class="bi bi-chevron-down ms-auto"></i>
       </a>
@@ -36,14 +43,14 @@
           </a>
         </li>
         <li>
-          <a href="?page=trans-order">
-            <i class="bi bi-circle"></i><span>Transaction Order</span>
+          <a href="?page=menu">
+            <i class="bi bi-circle"></i><span>Menu</span>
           </a>
         </li>
       </ul>
-    </li><!-- End Components Nav -->
+    </li>End Components Nav -->
 
-    <li class="nav-item">
+    <!-- <li class="nav-item">
       <a class="nav-link collapsed" data-bs-target="#forms-nav" data-bs-toggle="collapse" href="#">
         <i class="bi bi-journal-text"></i><span>Transection</span><i class="bi bi-chevron-down ms-auto"></i>
       </a>
@@ -69,7 +76,7 @@
           </a>
         </li>
       </ul>
-    </li>
+    </li> -->
 
   </ul>
   <!-- End Forms Nav -->
