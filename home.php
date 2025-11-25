@@ -5,7 +5,43 @@ include 'inc/functions.php';
 include 'config/config.php';
 
 checkLogin();
+
+// mencegah login tidak sesuai role
+
+//role apapun boleh akses dashboard
+
+
+// $currentPage = isset($_GET['page']) ? $_GET['page'] : 'dashboard';
+// // if ($currentPage == 'dashboard') {
+// //   return;
+// // }
+
+// $level_id = $_SESSION['LEVEL_ID'] ?? '';
+
+// $query = mysqli_query($config, "SELECT * FROM menus JOIN level_menus ON level_menus.menu_id = menus.id WHERE level_id = '$level_id'");
+// $rows = mysqli_fetch_all($query, MYSQLI_ASSOC);
+
+// $allowed_role = false;
+
+// foreach ($rows as $row) {
+//   if ($row['link'] == $currentPage) {
+//     $allowed_role = true;
+//     break;
+//   }
+//   if (!$allowed_role) {
+//     echo "<h1>Acces Failed</h1>";
+//     echo "Anda tidak memiliki akses ke halaman" . ucfirst($currentPage);
+//     echo "<a href='home.php?page=dashboard'>Back to Dashboard</a>";
+//     exit;
+//   }
+// }
+
+// if (!$allowed_role) {
+//   header("location:?page=dashboard&access_failed=access forbidden");
+// }
 ?>
+
+
 
 <!DOCTYPE html>
 <html lang="en">

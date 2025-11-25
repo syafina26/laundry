@@ -1,6 +1,6 @@
 <?php
 
-$q_menus = mysqli_query($config, "SELECT * FROM menus");
+$q_menus = mysqli_query($config, "SELECT * FROM menus ORDER BY `order` ASC");
 $menus = mysqli_fetch_all($q_menus, MYSQLI_ASSOC);
 // var_dump($menus)
 
@@ -37,6 +37,7 @@ if (isset($_GET['delete'])) {
               <th>Name</th>
               <th>Icon</th>
               <th>Link</th>
+              <th>Order</th>
               <th>Actions</th>
             </tr>
             <?php
@@ -54,6 +55,9 @@ if (isset($_GET['delete'])) {
                 </td>
                 <td>
                   <?Php echo $Menu['link'] ?>
+                </td>
+                <td>
+                  <?Php echo $Menu['order'] ?>
                 </td>
                 <td>
                   <a href="?page=tambah-Menu&edit=<?php echo $Menu['id'] ?>" class="btn btn-success">
