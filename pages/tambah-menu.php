@@ -35,7 +35,7 @@ if (isset($_POST['update'])) {
   <div class="col-sm-12">
     <div class="card">
       <div class="card-header">
-        <h3><?= $id ? 'Edit menu' : 'Tambah menu' ?>Menu</h3>
+        <h3><?= $id ? 'Edit menu' : 'Tambah Menu' ?></h3>
       </div>
       <div class="card-body">
         <form method="post">
