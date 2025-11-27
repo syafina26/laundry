@@ -1,69 +1,89 @@
 <?php
 include '../config/config.php';
 
-$queryCat = mysqli_query($config, "SELECT * FROM services");
-$fetchCats = mysqli_fetch_all($queryCat, MYSQLI_ASSOC);
+$queryService = mysqli_query($config, "SELECT * FROM services");
+$rowServeices = mysqli_fetch_all($queryService, MYSQLI_ASSOC);
+
+$queryCustomers = mysqli_query($config, "SELECT * FROM customers");
+$rowCustomers = mysqli_fetch_all($queryCustomers, MYSQLI_ASSOC);
 
 // query product
-// $queryProducts = mysqli_query($config, "SELECT s.name, p.* FROM products p LEFT JOIN services c ON c.id = p.category_id");
+// $queryProducts = mysqli_query($config, "SELECT s.name, p.* FROM products p LEFTCustomerss c ON c.id = p.category_id");
 // $fetchProducts = mysqli_fetch_all($queryProducts, MYSQLI_ASSOC);
 
 
 if (isset($_GET['payment'])) {
-  // transaction
   mysqli_begin_transaction($config);
+
   $data = json_decode(file_get_contents('php://input'), true);
 
-  $cart = $data["cart"];
-  $total = array_reduce($cart, function ($sum, $item) {
-    return $sum + ($item['product_price'] * $item['quantity']);
-  }, 0);
+  // FIXED INPUT VARIABLES
+  $cart = $data['cart'];
   $tax = $data['tax'];
   $orderAmount = $data['grandTotal'];
   $orderCode = $data['order_code'];
-  $orderDate = date("Y-m-d H:i:s");
-  $orderChange = 0;
-  $orderStatus = 1;
+  $customer_id = $data['customer_id'];
+  $end_Date = $data['end_date'];
   $subtotal = $data['subtotal'];
 
+  $orderDate = date("Y-m-d H:i:s"); // fixed
+  $orderChange = 0;
+  $orderPay = 0;
+  $orderStatus = 1;
+
   try {
-    $insertOrder = mysqli_query($config, "INSERT INTO trans_orders (order_code, order_date, order_amount, order_subtotal, order_status) VALUES ('$orderCode', '$orderDate', '$orderAmount', '$subtotal', '$orderStatus')");
+    // FIXED QUERY → VARIABLES NOW CORRECT
+    $insertOrder = mysqli_query(
+      $config,
+      "INSERT INTO trans_orders 
+        (order_code, order_end_date, order_total, order_pay, order_change, order_tax, order_status, customer_id) 
+       VALUES 
+        ('$orderCode', '$end_Date', '$orderAmount', '$orderPay', '$orderChange', '$tax', '$orderStatus', '$customer_id')"
+    );
 
     if (!$insertOrder) {
-      throw new Exception("Insert failed to table orders", mysqli_error($config));
+      throw new Exception("Insert failed to table orders: " . mysqli_error($config));
     }
 
     $idOrder = mysqli_insert_id($config);
 
     foreach ($cart as $v) {
-      $product_id = $v['id'];
-      $qty = $v['quantity'];
-      $order_price = $v['product_price'];
+      $service_id = $v['id'];
+      $qty = $v['quantity'];           // FIXED
+      $order_price = $v['product_price']; // FIXED
       $subtotal = $qty * $order_price;
 
-      $insertOrderDetails = mysqli_query($config, "INSERT INTO trans_order_details (order_id, product_id, qty, order_price, order_subtotal) VALUES ('$idOrder', '$product_id', '$qty', '$order_price', '$subtotal')");
+      $insertOrderDetails = mysqli_query(
+        $config,
+        "INSERT INTO trans_order_details 
+          (order_id, service_id, qty, price, subtotal) 
+         VALUES ('$idOrder', '$service_id', '$qty', '$order_price', '$subtotal')"
+      );
+
       if (!$insertOrderDetails) {
-        throw new Exception("Insert failed to table orders", mysqli_error($config));
+        throw new Exception("Insert failed to order_details: " . mysqli_error($config));
       }
     }
 
     mysqli_commit($config);
-    $response = [
+
+    echo json_encode([
       'status' => 'success',
       'message' => 'Transaction success',
       'order_id' => $idOrder,
       'order_code' => $orderCode,
-    ];
-    echo json_encode($response, 201);
-    die;
+    ], 201);
+    exit;
   } catch (\Throwable $th) {
     mysqli_rollback($config);
-    $response = ['status' => 'Error', 'message' => $th->getMessage()];
-    echo json_encode($response, 500);
-    die;
-    // ['status': '', 'message': ''];
+    echo json_encode([
+      'status' => 'Error',
+      'message' => $th->getMessage(),
+    ], 500);
+    exit;
   }
 }
+
 
 $orderNumbers = mysqli_query($config, "SELECT id FROM trans_orders ORDER BY id DESC LIMIT 1");
 $row = mysqli_fetch_assoc($orderNumbers);
@@ -79,10 +99,10 @@ $order_code = "ORD-" . date('dmy') . str_pad($nextId, 4, "0", STR_PAD_LEFT);
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Point Of Sales</title>
+  <title>Laundry PPKD JP</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
     integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous" />
-  <link rel="stylesheet" href="../assets/css/enrio.css" />
+  <link rel="stylesheet" href="../assets/css/syafina.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
 </head>
 
@@ -95,21 +115,91 @@ $order_code = "ORD-" . date('dmy') . str_pad($nextId, 4, "0", STR_PAD_LEFT);
     </div>
     <div class="row h-100">
       <div class="col-md-7 product-section">
-        <div class="mb-4">
-          <h4 class="mb-3" id="product-title"><i class="bi bi-shop"></i>
-            Product
-          </h4>
-          <input type="text" id="searchProduct" class="form-control search-box" placeholder="Find Product...">
+        <div class="card shadow-sm mb-3">
+          <div class="card-header">
+            Customer
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="" class="form-label">Customer Name</label>
+                <select name="customer_id" id="customer_id" class="form-control" onchange="selectCustomers()">
+                  <option value="">Select One</option>
+                  <?php foreach ($rowCustomers as $customer): ?>
+                    <option data-phone="<?php echo $customer['phone'] ?>" value="<?php echo $customer['id'] ?>">
+                      <?php echo $customer['name'] ?></option>
+                  <?php endforeach ?>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label for="" class="form-label">
+                  Phone Number
+                </label>
+                <input type="text" class="form-control" placeholder="Phone Number" id="phone" readonly>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label for="" class="form-label">
+                  End Date
+                </label>
+                <input type="date" name="end_data" id="end_date" class="form-control">
+
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="mb-4">
-          <button class="btn btn-primary category-btn active" onclick="filterCategory('all', this)">All
-            Menu</button>
-          <?php foreach ($fetchCats as $cat): ?>
-            <button class="btn btn-outline-primary category-btn"
-              onclick="filterCategory('<?php echo $cat['category_name'] ?>', this)"><?php echo $cat['category_name'] ?></button>
-          <?php endforeach ?>
+        <div class="card shadow-sm mb-3">
+          <div class="card-header">
+            Laundry Service
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <?php foreach ($rowServeices as $service) : ?>
+                <div class="col-md-4 mb-3">
+                  <div class="card service-card p-2"
+                    onclick="openModal(<?php echo htmlspecialchars(json_encode($service)) ?>)">
+                    <h6><?php echo $service['name'] ?></h6>
+                    <small class="text-muted">Rp.<?php echo $service['price'] ?>/kg</small>
+                  </div>
+                </div>
+              <?php endforeach ?>
+            </div>
+          </div>
         </div>
-        <div class="row" id="productGrid">
+        <!-- Button trigger modal -->
+        <!-- <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
+          Launch demo modal
+        </button> -->
+
+        <!-- Modal -->
+        <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h1 class="modal-title fs-5" id="exampleModalLabel">Modal title</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                <input type="hidden" id="modal_id">
+                <input type="hidden" id="modal_price">
+                <input type="hidden" id="modal_type">
+
+                <div class="mb-3">
+                  <label for="" class="form-label">Service Name</label>
+                  <input type="text" id="modal_name" class="form-control" readonly>
+                </div>
+
+                <div class="mb-3">
+                  <label for="" class="form-label">Weight / Qty</label>
+                  <input type="number" id="modal_qty" class="form-control" placeholder="Weight / Qty">
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="addCart()">Add to Cart</button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       <div class="col-md-5 cart-section">
@@ -144,7 +234,7 @@ $order_code = "ORD-" . date('dmy') . str_pad($nextId, 4, "0", STR_PAD_LEFT);
           </div>
           <div class="row g-2">
             <div class="col-md-6">
-              <button class="btn fw-bold p-3 btn-danger w-100" id="clearCart">
+              <button class="btn btn-clear-cart fw-bold p-3 btn-outline-danger w-100" id="clearCart">
                 <i class="bi bi-trash"></i> Clear Cart
               </button>
             </div>
@@ -168,7 +258,7 @@ $order_code = "ORD-" . date('dmy') . str_pad($nextId, 4, "0", STR_PAD_LEFT);
     const products = <?php echo json_encode($fetchProducts); ?>
   </script>
 
-  <script src="../assets/js/enrio.js"></script>
+  <script src="../assets/js/syafina.js"></script>
 
 </body>
 

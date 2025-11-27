@@ -88,3 +88,7 @@ body {
   font-size: 1.1rem;
   font-weight: bold;
 }
+
+.service-card {
+  cursor: pointer !important;
+}
