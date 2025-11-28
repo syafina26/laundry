@@ -2,10 +2,13 @@
 include '../config/config.php';
 
 $queryService = mysqli_query($config, "SELECT * FROM services");
-$rowServeices = mysqli_fetch_all($queryService, MYSQLI_ASSOC);
+$rowServices = mysqli_fetch_all($queryService, MYSQLI_ASSOC);
 
 $queryCustomers = mysqli_query($config, "SELECT * FROM customers");
 $rowCustomers = mysqli_fetch_all($queryCustomers, MYSQLI_ASSOC);
+
+$querytax = mysqli_query($config, "SELECT * FROM taxs WHERE is_active = 1 ORDER BY id DESC LIMIT 1");
+$rowtax = mysqli_fetch_assoc($querytax);
 
 // query product
 // $queryProducts = mysqli_query($config, "SELECT s.name, p.* FROM products p LEFTCustomerss c ON c.id = p.category_id");
@@ -26,9 +29,9 @@ if (isset($_GET['payment'])) {
   $end_Date = $data['end_date'];
   $subtotal = $data['subtotal'];
 
-  $orderDate = date("Y-m-d H:i:s"); // fixed
-  $orderChange = 0;
-  $orderPay = 0;
+  $orderDate = date("Y-m-d H:i:s");
+  $orderChange = $data['change'];
+  $orderPay = $data['pay'];
   $orderStatus = 1;
 
   try {
@@ -49,15 +52,15 @@ if (isset($_GET['payment'])) {
 
     foreach ($cart as $v) {
       $service_id = $v['id'];
-      $qty = $v['quantity'];           // FIXED
-      $order_price = $v['product_price']; // FIXED
-      $subtotal = $qty * $order_price;
+      $qty = $v['qty'];
+      $price = $v['price'];
+      $subtotal = $qty * $price;
 
       $insertOrderDetails = mysqli_query(
         $config,
         "INSERT INTO trans_order_details 
           (order_id, service_id, qty, price, subtotal) 
-         VALUES ('$idOrder', '$service_id', '$qty', '$order_price', '$subtotal')"
+         VALUES ('$idOrder', '$service_id', '$qty', '$price', '$subtotal')"
       );
 
       if (!$insertOrderDetails) {
@@ -109,17 +112,13 @@ $order_code = "ORD-" . date('dmy') . str_pad($nextId, 4, "0", STR_PAD_LEFT);
 <body>
   <!-- container-fluid -->
   <div class="container-fluid container-pos">
-    <div id="card">
-      <!-- <h3>Nama Product</h3>
-        <p>Description Product</p> -->
-    </div>
     <div class="row h-100">
       <div class="col-md-7 product-section">
         <div class="card shadow-sm mb-3">
           <div class="card-header">
             Customer
           </div>
-          <div class="card-body">
+          <d iv class="card-body">
             <div class="row g-3">
               <div class="col-md-6">
                 <label for="" class="form-label">Customer Name</label>
@@ -146,7 +145,6 @@ $order_code = "ORD-" . date('dmy') . str_pad($nextId, 4, "0", STR_PAD_LEFT);
 
               </div>
             </div>
-          </div>
         </div>
         <div class="card shadow-sm mb-3">
           <div class="card-header">
@@ -154,50 +152,15 @@ $order_code = "ORD-" . date('dmy') . str_pad($nextId, 4, "0", STR_PAD_LEFT);
           </div>
           <div class="card-body">
             <div class="row g-3">
-              <?php foreach ($rowServeices as $service) : ?>
+              <?php foreach ($rowServices as $service) : ?>
                 <div class="col-md-4 mb-3">
                   <div class="card service-card p-2"
                     onclick="openModal(<?php echo htmlspecialchars(json_encode($service)) ?>)">
                     <h6><?php echo $service['name'] ?></h6>
-                    <small class="text-muted">Rp.<?php echo $service['price'] ?>/kg</small>
+                    <small class="text-muted">Rp. <?php echo $service['price'] ?> /kg</small>
                   </div>
                 </div>
               <?php endforeach ?>
-            </div>
-          </div>
-        </div>
-        <!-- Button trigger modal -->
-        <!-- <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
-          Launch demo modal
-        </button> -->
-
-        <!-- Modal -->
-        <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-          <div class="modal-dialog">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h1 class="modal-title fs-5" id="exampleModalLabel">Modal title</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-              </div>
-              <div class="modal-body">
-                <input type="hidden" id="modal_id">
-                <input type="hidden" id="modal_price">
-                <input type="hidden" id="modal_type">
-
-                <div class="mb-3">
-                  <label for="" class="form-label">Service Name</label>
-                  <input type="text" id="modal_name" class="form-control" readonly>
-                </div>
-
-                <div class="mb-3">
-                  <label for="" class="form-label">Weight / Qty</label>
-                  <input type="number" id="modal_qty" class="form-control" placeholder="Weight / Qty">
-                </div>
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" onclick="addCart()">Add to Cart</button>
-              </div>
             </div>
           </div>
         </div>
@@ -222,9 +185,10 @@ $order_code = "ORD-" . date('dmy') . str_pad($nextId, 4, "0", STR_PAD_LEFT);
               <input type="hidden" id="subtotal_value">
             </div>
             <div class="d-flex justify-content-between mb-2">
-              <span>Pajak (10%) :</span>
+              <span>Pajak (<?php echo $rowtax['percent'] ?> %) : </span>
               <span id="tax">Rp. 0.0</span>
               <input type="hidden" id="tax_value">
+              <input type="hidden" class="tax" value="<?php echo $rowtax['percent'] ?>">
             </div>
             <div class="d-flex justify-content-between mb-2">
               <span>Total :</span>
@@ -232,21 +196,61 @@ $order_code = "ORD-" . date('dmy') . str_pad($nextId, 4, "0", STR_PAD_LEFT);
               <input type="hidden" id="total_value">
             </div>
           </div>
-          <div class="row g-2">
-            <div class="col-md-6">
-              <button class="btn btn-clear-cart fw-bold p-3 btn-outline-danger w-100" id="clearCart">
-                <i class="bi bi-trash"></i> Clear Cart
-              </button>
-            </div>
-            <div class="col-md-6">
-              <button class="btn fw-bold p-3 btn-primary w-100" onclick="processPayment()">
-                <i class="bi bi-cash"></i> Process Payment
-              </button>
-            </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span>Pay :</span>
+            <input type="number" id="pay" class="form-control w-50" placeholder="Enter the payment amount"
+              oninput="calculateChange()">
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span>Change :</span>
+            <input type="number" id="change" class="form-control w-50" readonly>
+          </div>
+        </div>
+        <div class="row g-2">
+          <div class="col-md-6">
+            <button class="btn btn-clear-cart fw-bold p-3 btn-outline-danger w-100" id="clearCart">
+              <i class="bi bi-trash"></i> Clear Cart
+            </button>
+          </div>
+          <div class="col-md-6">
+            <button class="btn fw-bold p-3 btn-primary w-100" onclick="processPayment()">
+              <i class="bi bi-cash"></i> Process Payment
+            </button>
           </div>
         </div>
       </div>
     </div>
+    <!-- Modal -->
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="exampleModalLabel">Modal title</h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="modal_id">
+            <input type="hidden" id="modal_price">
+            <input type="hidden" id="modal_type">
+
+            <div class="mb-3">
+              <label for="" class="form-label">Service Name</label>
+              <input type="text" id="modal_name" class="form-control" readonly>
+            </div>
+
+            <div class="mb-3">
+              <label for="" class="form-label">Weight / Qty</label>
+              <input type="number" id="modal_qty" class="form-control" placeholder="Weight / Qty" step="0,1" min="0">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" onclick="addToCart()">Add to Cart</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
   </div>
 
 
